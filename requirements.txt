@@ -1,5 +1,5 @@
 numpy
-tensorflow==1.7
+tensorflow==1.7.1
 keras
 pandas
 matplotlib

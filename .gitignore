@@ -191,7 +191,3 @@ venv.bak/
 .idea/modules.xml
 .idea/tensorflow_serving_weather_service.iml
 .idea/vcs.xml
-Jena_Wetterfrosch_V2.py
-README.md
-Wetterfrosch_V1.py
-notebooks/
