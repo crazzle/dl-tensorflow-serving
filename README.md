@@ -1,4 +1,4 @@
-# Big Data mit Luigi und Python
+# Deep Learning Modelle deployen mit Keras und TensorFlow Serving
 
 Der Beispielcode zum Artikel "Deep Learning Modelle deployen mit TensorFlow Serving"
 
