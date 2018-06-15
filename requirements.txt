@@ -1,8 +1,8 @@
-numpy
+numpy==1.14.3
 tensorflow==1.7.1
-keras
-pandas
-matplotlib
-jupyter
-jupyterlab
-tensorflow-serving-api
+keras==2.1.6
+matplotlib==2.2.2
+jupyter==1.0.0
+jupyterlab==0.32.1
+tensorflow-serving-api==1.7.0
+grpcio==1.12.0
