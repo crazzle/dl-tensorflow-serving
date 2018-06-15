@@ -2,3 +2,4 @@ tf_weather_service
 .idea
 .ipynb_checkpoints
 test.sublime-project
+.DS_Store
