@@ -9,7 +9,7 @@ import os
 """
 Das Modell wird mit Keras geladen
 """
-wetterfrosch_v1 = load_model('keras_models/wetterfrosch_v1.h5')
+wetterfrosch_v1 = load_model('../keras_models/wetterfrosch_v1.h5')
 
 #%%
 """

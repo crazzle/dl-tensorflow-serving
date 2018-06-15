@@ -11,7 +11,7 @@ from numpy import genfromtxt
 rohdaten = genfromtxt(fname='../datasets/jena_climate_2009_2016.csv',
                       delimiter=',', 
                       skip_header=True, 
-                      usecols=(range(1,15)))
+                      usecols=(range(1, 15)))
 
 #%%
 """
@@ -43,7 +43,7 @@ def generiere(data, lookback, delay):
     for i in range(0+lookback, max_index):
         x[i-lookback] = data[i-lookback:i]
         y[i-lookback] = data[i+delay][1]
-    return x,y
+    return x, y
 
 #%%
 """
@@ -97,7 +97,7 @@ wetterfrosch_v1.add(keras.layers.Dense(1))
 wetterfrosch_v1.compile(optimizer=keras.optimizers.RMSprop(),
                         loss='mae')
 
-utils.plot_model(a=wetterfrosch_v1,
+utils.plot_model(wetterfrosch_v1,
                  to_file="wetterfrosch_v1.png",
                  show_shapes=True,
                  show_layer_names=True)
