@@ -1,0 +1,955 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"ge",
+				"get_model_metadata_pb2"
+			],
+			[
+				"te",
+				"test_y\tstatement"
+			],
+			[
+				"test",
+				"test_x"
+			],
+			[
+				"clea",
+				"%clear"
+			],
+			[
+				"py",
+				"pyplot"
+			],
+			[
+				"mat",
+				"matplotlib"
+			],
+			[
+				"im",
+				"plt.imshow"
+			],
+			[
+				"d",
+				"display"
+			],
+			[
+				"ten",
+				"tensorflow"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "from tensorflow import keras\nimport tensorflow as tf\nfrom grpc.beta import implementations\nfrom tensorflow_serving.apis import predict_pb2\nfrom tensorflow_serving.apis import prediction_service_pb2\nimport numpy as np\nimport os\nos.chdir(\"/Users/markkeinhorster/git/tensorflow_serving_weather_service\")\n\n#%%\nfrom numpy import genfromtxt\nfloat_data = genfromtxt('datasets/jena_climate_2009_2016.csv', \n\tdelimiter=',', \n\tskip_header=True, \n\tusecols=(range(1,15)))\nprint float_data.shape\nprint len(float_data)\n\n#%%mean = float_data[:200000].mean(axis=0)\nnormalized_data = float_data - mean\nstd = normalized_data[:200000].std(axis=0)\ncentered_data = normalized_data / std\nprint len(centered_data)\n\n#%%\ndef generate_data(data, lookback, delay):\n    max_index = len(data) - delay - 1\n    x = np.zeros((max_index-lookback, lookback, 14)).astype(np.float32)\n    y = np.zeros((max_index-lookback)).astype(np.float64)\n    for i in range(0+lookback, max_index):\n        x[i-lookback] = data[i-lookback:i]\n        y[i-lookback] = data[i+delay][1]\n    return x,y\n\n#%%\nstep = 6 # = 1 Datenpunkt pro Stunde\nlookback = 240 # = 5 Tage = 5 * 24 Stunden\ndelay = 24 # = 1 Tag in die Zukunft vorhersagen\nmax_index = len(centered_data) - delay - 1\nsubsampled = centered_data[::step, :]\n\n#%%\ntest_data = subsampled[52560:, :]\ntest_x, test_y = generate_data(test_data, lookback, delay)\n\n#%%\nfrom tensorflow.python.saved_model import tag_constants, signature_constants\nprint signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY\n\n#%%\nhost = \"localhost\"\nport = \"9000\"\nchannel = implementations.insecure_channel(host, int(port))\nstub = prediction_service_pb2.beta_create_PredictionService_stub(channel)\n\n#%%\nfrom tensorflow_serving.apis import get_model_metadata_pb2\nstatus = get_model_metadata_pb2.GetModelMetadataRequest()\nstatus.model_spec.name = 'weather'\nstatus.model_spec.signature_name = 'serving_default'\nstatus.metadata_field.append(\"signature_def\")\nresponse = stub.GetModelMetadata(status, 10)\nprint response\n\n#%%\nrequest = predict_pb2.PredictRequest()\nrequest.model_spec.name = 'weather'\nrequest.model_spec.signature_name = 'serving_default'\nrequest.model_spec.version.value = 1\nrequest.inputs['input'].CopyFrom(tf.contrib.util.make_tensor_proto(test_x[0:1]))\nresult = stub.Predict(request, 10.0)  # 10 secs timeout\nprint \"prediction: %s, label: %f\" % (result, test_y[0])",
+			"file": "Jena_Weather_Serving_Client.py",
+			"file_size": 2347,
+			"file_write_time": 131713710734839433,
+			"settings":
+			{
+				"buffer_size": 2353,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Jena_Weather_Estimator.py",
+			"settings":
+			{
+				"buffer_size": 4254,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "models/models.conf",
+			"settings":
+			{
+				"buffer_size": 209,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Jupyter console 5.2.0\n\nPython 2.7.14 (default, Sep 27 2017, 12:15:00) \nType \"copyright\", \"credits\" or \"license\" for more information.\n\nIPython 5.7.0 -- An enhanced Interactive Python.\n?         -> Introduction and overview of IPython's features.\n%quickref -> Quick reference.\nhelp      -> Python's own help system.\nobject?   -> Details about 'object', use 'object??' for extra details.\n\n\n\nIn [1]: ",
+			"settings":
+			{
+				"buffer_size": 397,
+				"line_ending": "Unix",
+				"name": "*REPL* [python]",
+				"scratch": true
+			}
+		},
+		{
+			"contents": "Successfully loaded servable version {name: weather version: 2}             \n2018-05-21 10:55:29.113915: I tensorflow_serving/core/basic_manager.cc:716] \nSuccessfully reserved resources to load servable {name: weather version: 1} \n2018-05-21 10:55:29.114056: I tensorflow_serving/core/loader_harness.cc:66] \nApproving load for servable version {name: weather version: 1}              \n2018-05-21 10:55:29.114218: I tensorflow_serving/core/loader_harness.cc:74] \nLoading servable version {name: weather version: 1}                         \n2018-05-21 10:55:29.115221: I external/org_tensorflow/tensorflow/contrib/ses\nsion_bundle/bundle_shim.cc:360] Attempting to load native SavedModelBundle i\nn bundle-shim from: /tmp/models/weather/1                                   \n2018-05-21 10:55:29.115838: I external/org_tensorflow/tensorflow/cc/saved_mo\ndel/loader.cc:242] Loading SavedModel with tags: { serve }; from: /tmp/model\ns/weather/1                                                                 \n2018-05-21 10:55:29.151680: I external/org_tensorflow/tensorflow/cc/saved_mo\ndel/loader.cc:161] Restoring SavedModel bundle.                             \n2018-05-21 10:55:29.174155: I external/org_tensorflow/tensorflow/cc/saved_mo\ndel/loader.cc:196] Running LegacyInitOp on SavedModel bundle.               \n2018-05-21 10:55:29.182574: I external/org_tensorflow/tensorflow/cc/saved_mo\ndel/loader.cc:291] SavedModel load for tags { serve }; Status: success. Took\n 67149 microseconds.                                                        \n2018-05-21 10:55:29.201231: I tensorflow_serving/core/loader_harness.cc:86] \nSuccessfully loaded servable version {name: weather version: 1}             \n2018-05-21 10:55:29.203741: I tensorflow_serving/model_servers/main.cc:316] \nRunning ModelServer at 0.0.0.0:9000 ...                                     \n^C                                                                          \n0;root@eccd0a4271e4: /root@eccd0a4271e4:/#                                  \n",
+			"settings":
+			{
+				"buffer_size": 2002,
+				"line_ending": "Unix",
+				"name": "Terminal (bash)",
+				"read_only": true,
+				"scratch": true
+			}
+		},
+		{
+			"file": "Dockerfile",
+			"settings":
+			{
+				"buffer_size": 1092,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": " \n",
+			"settings":
+			{
+				"buffer_size": 2,
+				"line_ending": "Unix",
+				"name": "Terminal (bash)",
+				"read_only": true,
+				"scratch": true
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"python",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"Package Control: inst",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: insta",
+				"Package Control: Install Package"
+			],
+			[
+				"termin",
+				"Terminal View: Open Bash Terminal"
+			],
+			[
+				"Package Control: install",
+				"Package Control: Install Package"
+			],
+			[
+				"py",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"virtual",
+				"Virtualenv: Activate"
+			],
+			[
+				"terminal",
+				"Terminal View: Open Bash Terminal"
+			],
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
+			[
+				"ven",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"virut",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"python ",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"python i",
+				"SublimeREPL: Python - IPython"
+			],
+			[
+				"python v",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"repl: Python",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"repl: ip",
+				"SublimeREPL: Python - virtualenv"
+			],
+			[
+				"repl",
+				"SublimeREPL: Python"
+			],
+			[
+				"Package Control: ints",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 136.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service",
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/models"
+	],
+	"file_history":
+	[
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/models.conf",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/Anaconda/Anaconda.sublime-settings",
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/test.sublime-project",
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/Jena_Weather_Serving_Client.py",
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/Jena_Weather_Estimator.py",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/User/Anaconda.sublime-settings",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/User/Python.sublime-settings",
+		"/Users/markkeinhorster/git/tensorflow_serving_weather_service/test.py",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/User/SublimeREPL.sublime-settings",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/SublimeREPL/SublimeREPL.sublime-settings",
+		"/Users/markkeinhorster/Library/Application Support/Sublime Text 3/Packages/User/Virtualenv.sublime-settings"
+	],
+	"find":
+	{
+		"height": 39.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "Jena_Weather_Serving_Client.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2353,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								505,
+								505
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "python"
+							},
+							"auto_complete_triggers":
+							[
+								{
+									"characters": ".",
+									"selector": "source.python - string - comment - constant.numeric"
+								},
+								{
+									"characters": ".",
+									"selector": "source.python - string - constant.numeric"
+								},
+								{
+									"characters": ".",
+									"selector": "source.python - string - constant.numeric"
+								}
+							],
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "Jena_Weather_Estimator.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4254,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3662,
+								3667
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "python"
+							},
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "models/models.conf",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 209,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								207,
+								207
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 110,
+								"count": 10,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 397,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								397,
+								397
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "python"
+							},
+							"auto_complete": true,
+							"auto_indent": false,
+							"detect_indentation": false,
+							"gutter": false,
+							"history_arrows": true,
+							"indent_subsequent_lines": false,
+							"line_numbers": false,
+							"repl": true,
+							"repl_external_id": "python",
+							"repl_id": "6da3157d5eb946fb9d32521a67825097",
+							"repl_restart_args":
+							{
+								"autocomplete_server": true,
+								"cmd":
+								[
+									"/Users/markkeinhorster/.venv/tf_weather_service/bin/python",
+									"-u",
+									"${packages}/SublimeREPL/config/Python/ipy_repl.py"
+								],
+								"cwd": "$file_path",
+								"encoding": "utf8",
+								"extend_env":
+								{
+									"PATH": "/Users/markkeinhorster/.venv/tf_weather_service/bin:{PATH}",
+									"PYTHONIOENCODING": "utf-8",
+									"SUBLIMEREPL_ACTIVATE_THIS": "/Users/markkeinhorster/.venv/tf_weather_service/bin/activate_this.py"
+								},
+								"external_id": "python",
+								"syntax": "Packages/Python/Python.tmLanguage",
+								"type": "subprocess"
+							},
+							"repl_sublime2": false,
+							"smart_indent": false,
+							"spell_check": false,
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 4,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2002,
+						"regions":
+						{
+							"10,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"11,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"11,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"14,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"14,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"15,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"3,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"4,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"5,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"5,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"9,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"9,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2002,
+										2002
+									]
+								],
+								"scope": "terminalview.black_blue"
+							}
+						},
+						"selection":
+						[
+							[
+								1968,
+								1968
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 2782,
+								"count": 89,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_complete": false,
+							"auto_complete_commit_on_tab": false,
+							"caret_style": "blink",
+							"color_scheme": "Packages/TerminalView/TerminalView.hidden-tmTheme",
+							"draw_centered": false,
+							"draw_indent_guides": false,
+							"draw_white_space": "none",
+							"gutter": false,
+							"highlight_line": false,
+							"scroll_past_end": false,
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"terminal_view": true,
+							"terminal_view_activate_args":
+							{
+								"cmd": "/bin/bash -l",
+								"cwd": "/Users/markkeinhorster/git/tensorflow_serving_weather_service",
+								"keep_open": false,
+								"syntax": null,
+								"title": "Terminal (bash)"
+							},
+							"terminal_view_last_cursor_pos":
+							[
+								25,
+								43
+							],
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "Dockerfile",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1092,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1027,
+								1027
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2,
+						"regions":
+						{
+							"0,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"0,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"1,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"5,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_green"
+							},
+							"5,16":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_blue"
+							},
+							"6,0":
+							{
+								"flags": 272,
+								"regions":
+								[
+									[
+										2,
+										2
+									]
+								],
+								"scope": "terminalview.black_blue"
+							}
+						},
+						"selection":
+						[
+							[
+								1,
+								1
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": -1,
+								"modified": true,
+								"selection": true,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_complete": false,
+							"auto_complete_commit_on_tab": false,
+							"caret_style": "blink",
+							"color_scheme": "Packages/TerminalView/TerminalView.hidden-tmTheme",
+							"draw_centered": false,
+							"draw_indent_guides": false,
+							"draw_white_space": "none",
+							"gutter": false,
+							"highlight_line": false,
+							"scroll_past_end": false,
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"terminal_view": true,
+							"terminal_view_activate_args":
+							{
+								"cmd": "/bin/bash -l",
+								"cwd": "/Users/markkeinhorster/git/tensorflow_serving_weather_service",
+								"keep_open": false,
+								"syntax": null,
+								"title": "Terminal (bash)"
+							},
+							"terminal_view_last_cursor_pos":
+							[
+								0,
+								1
+							],
+							"word_wrap": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 26.0
+	},
+	"input":
+	{
+		"height": 38.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				2
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			],
+			[
+				1,
+				1,
+				2,
+				2
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.539185732887,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			0.5,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 120.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/Virtualenv/Python + Virtualenv.sublime-build",
+	"project": "test.sublime-project",
+	"replace":
+	{
+		"height": 48.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"*REPL* [python]"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 297.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

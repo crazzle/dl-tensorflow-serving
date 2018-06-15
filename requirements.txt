@@ -1,0 +1,8 @@
+numpy
+tensorflow==1.7
+keras
+pandas
+matplotlib
+jupyter
+jupyterlab
+tensorflow-serving-api
